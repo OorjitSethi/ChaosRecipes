@@ -1,0 +1,28 @@
+{
+    "gameplay": {
+      "minPlayers": 3,
+      "maxPlayers": 8,
+      "startingCoins": 50,
+      "startingIngredientsCount": 5,
+      "inventoryLimit": 10
+    },
+    "economy": {
+      "baseMarketPrices": {
+        "Carbon": 10,
+        "Silicon": 15,
+        "Polymer": 8
+      },
+      "complexComponentRecipes": {
+        "Microchip": { "Carbon": 2, "Silicon": 2 },
+        "Casing": { "Polymer": 3, "Carbon": 1 },
+        "FuelCell": { "Silicon": 3, "Polymer": 1 }
+      }
+    },
+    "events": {
+      "worldEventChance": 0.25
+    },
+    "turnTimer": {
+      "deductionIntervalSeconds": 45,
+      "deductionAmount": 5
+    }
+  }
