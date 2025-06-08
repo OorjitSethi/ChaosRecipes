@@ -44,7 +44,7 @@ export const Trade = ({ me, gameState, myOutgoingTrade, onAction }: Props) => {
     }
 
     return (
-        <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4 hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
             <h3 className="text-xl font-bold border-b border-gray-200 pb-2">🤝 Trading Post</h3>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Trade with:</label>

@@ -8,7 +8,7 @@ interface Props {
 
 export const Crafting = ({ gameState, onAction }: Props) => {
     return (
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4 hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
             <h3 className="text-xl font-bold border-b border-gray-200 pb-2 mb-4">🛠️ Crafting</h3>
             <ul className="space-y-3">
                 {Object.entries(gameState.constants.COMPLEX_COMPONENTS).map(([component, recipe]) => (

@@ -12,7 +12,7 @@ export const PlayerInfo = ({ player, gameState, gadgetRecipe }: Props) => {
     const timerConfig = gameState.config.turnTimer;
 
     return (
-        <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
+        <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4 hover:shadow-lg hover:border-indigo-200 transition-all duration-300">
             <h3 className="text-xl font-bold border-b border-gray-200 pb-2">{player.name} (You)</h3>
             
             <div className="text-3xl font-bold text-indigo-700">
