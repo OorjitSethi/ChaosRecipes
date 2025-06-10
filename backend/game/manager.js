@@ -364,10 +364,15 @@ class GameManager {
 
         const fromPlayer = this.gameState.players[trade.fromId]; // <-- Change 'from' to 'fromPlayer'
         const toPlayer = this.gameState.players[trade.toId];   // <-- Change 'to' to 'toPlayer'
-        delete this.gameState.pendingTrades[tradeId];
+        delete this.gameState.pendingTrades[tradeId]; // Remove trade regardless of outcome
 
-        if (!accepted || !fromPlayer || !toPlayer) { // <-- Use fromPlayer and toPlayer
-            io.to(fromPlayer.id).emit('actionFeedback', { success: false, message: 'Trade rejected.' });
+        if (!accepted || !fromPlayer || !toPlayer) {
+            // Give feedback to the original sender
+            io.to(trade.fromId).emit('actionFeedback', { success: false, message: 'Trade rejected.' });
+            
+            // THIS IS THE FIX: Tell everyone the pending trade is gone
+            io.emit('gameStateUpdate', GameManager.getSanitizedGameState(this.gameState));
+            
             return;
         }
 

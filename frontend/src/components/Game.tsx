@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { socket } from '../socket';
 import type { GameState } from '../types';
+import { GameSkeleton } from './GameSkeleton';
 
 import { EventNotification } from './EventNotification';
 import { PlayerInfo } from './PlayerInfo';
@@ -11,6 +12,7 @@ import { Market } from './Market';
 import { Crafting } from './Crafting';
 import { Trade } from './Trade';
 import { TradeModal } from './TradeModal';
+import { TutorialPopup } from './TutorialPopup';
 
 export const Game = () => {
     const { lobbyId } = useParams<{ lobbyId: string }>();
@@ -19,6 +21,7 @@ export const Game = () => {
     const [notification, setNotification] = useState<{ title: string; description: string } | null>(null);
     const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
     const [gameOver, setGameOver] = useState<{ winnerName: string; winningGadget: string } | null>(null);
+    const [showTutorial, setShowTutorial] = useState(false);
 
     useEffect(() => {
         if (!socket.connected) {
@@ -73,26 +76,27 @@ export const Game = () => {
 
     if (gameOver) {
         return (
-            <div className="game-container" style={{color: 'var(--light-green)'}}>
-                <h1>GAME OVER</h1>
-                <h2>{gameOver.winnerName} wins by building the {gameOver.winningGadget}!</h2>
-                <button onClick={() => {
-                    sessionStorage.removeItem('username');
-                    if (socket.connected) socket.disconnect();
-                    navigate('/');
-                }}>Return to Main Menu</button>
+            <div className="text-center space-y-4">
+                <h1 className="text-5xl font-bold text-green-600">GAME OVER</h1>
+                <h2 className="text-2xl">{gameOver.winnerName} wins by building the {gameOver.winningGadget}!</h2>
+                <button 
+                    onClick={() => {
+                        sessionStorage.removeItem('username');
+                        if (socket.connected) socket.disconnect();
+                        navigate('/');
+                    }}
+                    className="px-6 py-3 font-bold text-white rounded-lg bg-indigo-600 hover:bg-indigo-700 transition"
+                >
+                    Return to Menu
+                </button>
             </div>
         );
     }
 
-    if (!gameState) {
-        return <div>Joining lobby...</div>;
+    if (!gameState || !socket.id || !gameState.players[socket.id]) {
+        return <GameSkeleton />;
     }
-
-    const me = socket.id ? gameState.players[socket.id] : undefined;
-    if (!me) {
-        return <div>Syncing with server...</div>;
-    }
+    const me = gameState.players[socket.id];
 
     const myId = me.id;
     const pendingTrades = gameState.pendingTrades || {};
@@ -105,7 +109,8 @@ export const Game = () => {
 
     return (
         <div className="w-full space-y-6">
-            {myIncomingTrade && <TradeModal offer={myIncomingTrade} onResolve={handleResolveTrade} />}
+            {showTutorial && <TutorialPopup onClose={() => setShowTutorial(false)} />}
+            {myIncomingTrade && <TradeModal offer={myIncomingTrade} me={me} onResolve={handleResolveTrade} />}
             {feedback && <div className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg font-bold z-50 ${feedback.success ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>{feedback.message}</div>}
 
             <header className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -118,6 +123,10 @@ export const Game = () => {
                         </span>
                     </p>
                 </div>
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setShowTutorial(true)} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                        How to Play
+                    </button>
                 {gameState.gamePhase === 'IN_PROGRESS' && (
                     <button
                         onClick={() => handlePlayerAction('endTurn', {})}
@@ -127,6 +136,7 @@ export const Game = () => {
                         {isMeReady ? 'Waiting...' : 'End Turn'}
                     </button>
                 )}
+                </div>
             </header>
 
             {notification && <EventNotification title={notification.title} description={notification.description} />}
@@ -134,10 +144,10 @@ export const Game = () => {
             <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     {gameState.gamePhase === 'IN_PROGRESS' || isTurnCalculating ? (
-                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 transition-opacity ${isTurnCalculating ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 transition-opacity ${isMeReady || isTurnCalculating ? 'opacity-50 pointer-events-none' : ''}`}>
                             <PlayerInfo player={me} gameState={gameState} gadgetRecipe={myGadgetRecipe} />
                             <Market gameState={gameState} onAction={handlePlayerAction} />
-                            <Crafting gameState={gameState} onAction={handlePlayerAction} />
+                            <Crafting gameState={gameState} me={me} onAction={handlePlayerAction} />
                             <Trade me={me} gameState={gameState} myOutgoingTrade={myOutgoingTrade} onAction={handlePlayerAction} />
                         </div>
                     ) : (
@@ -180,10 +190,16 @@ export const Game = () => {
                         })}
                     </ul>
                     {gameState.gamePhase === 'LOBBY' && gameState.hostId === myId && (
-                        <button onClick={handleStartGame} className="mt-6 w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors">
-                            Start Game
-                        </button>
+                        <div className="mt-6 space-y-3">
+                            <button onClick={handleStartGame} className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors">
+                                Start Game
+                            </button>
+                            <button onClick={() => setShowTutorial(true)} className="w-full bg-indigo-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-indigo-600 transition-colors text-sm">
+                                How to Play
+                            </button>
+                        </div>
                     )}
+                    
                 </div>
             </main>
         </div>

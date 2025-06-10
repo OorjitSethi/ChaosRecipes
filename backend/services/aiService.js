@@ -82,38 +82,57 @@ const fallbackPriceEvent = {
 
 async function generatePriceChangeEvent(basePrices, existingModifiers) {
     const prompt = `
-    You are a market analyst AI. Create a single market event that causes a price change.
-    The change MUST be a DELTA (a positive or negative number).
-    
-    The BASE prices are: ${JSON.stringify(basePrices)}.
-    The CURRENT active price modifiers are: ${JSON.stringify(existingModifiers)}.
+    You are a market analyst AI for a game. Your task is to create a single, logically consistent market event that causes a price change for one resource.
 
-    Generate a creative price change for ONE item as a price delta. A reasonable delta is between -5 and +10.
-    
-    You MUST return a single, valid JSON object with this exact structure. All fields are required:
+    **CONTEXT:**
+    - The BASE prices are: ${JSON.stringify(basePrices)}.
+    - The CURRENT active price modifiers from previous turns are: ${JSON.stringify(existingModifiers)}.
+
+    **YOUR TASK:**
+    Generate a new price change event by following these rules precisely.
+
+    **RULES:**
+    1.  **CHOOSE ONE ITEM:** You must select only one item from this list: "Carbon", "Silicon", "Polymer".
+    2.  **CHOOSE A PRICE DELTA:** You must select a single integer for the price change (\`delta\`). It can be positive (for a price increase) or negative (for a price decrease). A reasonable delta is between -5 and +10.
+    3.  **CREATE A NARRATIVE:** Write a short, creative \`title\` and a one-sentence \`description\` for the event.
+    4.  **LOGICAL CONSISTENCY IS MANDATORY:** This is the most important rule. The story in your \`description\` MUST PERFECTLY MATCH the \`delta\`. 
+        - If \`delta\` is **positive** (e.g., 7), your description MUST explain a shortage, high demand, or other reason for a price INCREASE.
+        - If \`delta\` is **negative** (e.g., -4), your description MUST explain a surplus, low demand, or other reason for a price DECREASE.
+    5.  **OUTPUT FORMAT:** You MUST return only a single, valid JSON object with the specified keys. All keys are required.
+
+    **EXAMPLE OF A GOOD, CONSISTENT RESPONSE (POSITIVE DELTA):**
     {
-      "title": "A short, catchy market headline.",
-      "item": "Carbon" | "Silicon" | "Polymer",
-      "delta": <integer>,
-      "description": "A 1-sentence narrative description for the price change."
+      "title": "Silicon Shortage",
+      "item": "Silicon",
+      "delta": 6,
+      "description": "A fire at a major manufacturing plant has created a sudden shortage, driving up Silicon prices."
     }
 
-    Example of a perfect response:
+    **EXAMPLE OF A GOOD, CONSISTENT RESPONSE (NEGATIVE DELTA):**
     {
-      "title": "Carbon Demand Dips",
+      "title": "Carbon Oversupply",
       "item": "Carbon",
       "delta": -3,
-      "description": "An oversupply of carbon fiber has led to a slight dip in prices."
+      "description": "New-generation factories have produced a surplus of Carbon, causing its market price to drop."
+    }
+    
+    **EXAMPLE OF A BAD, INCONSISTENT RESPONSE (DO NOT DO THIS):**
+    {
+      "title": "Polymer Production Boost",
+      "item": "Polymer",
+      "delta": 5, // <--- BAD! Delta is positive, but description implies a negative change.
+      "description": "A leading Polymer manufacturer has increased production, leading to an oversupply."
     }
 
-    Now, generate a new price change event. Return only the JSON object.
+    The description and the delta's sign (positive/negative) must align. Now, generate a new, logically consistent price change event.
     `;
     try {
-        const response = await hf.chatCompletion({ model: model, messages: [{ role: "user", content: prompt }], max_tokens: 300 });
+        const response = await hf.chatCompletion({ model: model, messages: [{ role: "user", content: prompt }], max_tokens: 350 });
+        // We still keep the server-side validation as a final safety net.
         return parseLlmResponse(response.choices[0].message.content);
     } catch (error) {
         console.error("Error in generatePriceChangeEvent:", error);
-        return null; // Return null on error so the manager can handle it
+        return null; // Return null on error so the manager can handle it.
     }
 }
 
