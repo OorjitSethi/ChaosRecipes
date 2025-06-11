@@ -55,9 +55,34 @@ export const Crafting = ({ gameState, me, onAction }: Props) => {
                     );
                 })}
                 {/* ... The "Build Your Gadget!" part is unchanged ... */}
-                <li className="p-3 bg-green-50 rounded-md">
-                   {/* ... */}
-                </li>
+                {me.gadget && (
+                    <li className="p-3 bg-green-100 border border-green-200 rounded-md">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="font-bold text-green-800">Build Your Final Gadget!</p>
+                                <p className="text-xs text-gray-600">Requires: {gameState.gadgetRecipes[me.gadget]?.join(', ') || '...'}</p>
+                            </div>
+                            
+                            <div className="relative group">
+                                <button 
+                                    onClick={() => onAction('build', {})} 
+                                    // --- THIS IS THE FIX ---
+                                    // 1. Check if the button should be disabled
+                                    disabled={!gameState.gadgetRecipes[me.gadget]?.every(comp => (me.inventory[comp] || 0) >= 1)}
+                                    // 2. Add specific classes for the disabled state to override defaults
+                                    className="px-4 py-2 font-bold bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    BUILD!
+                                </button>
+                                { !gameState.gadgetRecipes[me.gadget]?.every(comp => (me.inventory[comp] || 0) >= 1) &&
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        You are missing a required component.
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </li>
+                )}
             </ul>
         </div>
     );
