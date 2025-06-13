@@ -23,7 +23,6 @@ export const Lobby = () => {
     const handleCreateLobby = () => {
         if (username.trim()) {
             sessionStorage.setItem('username', username);
-            if (!socket.connected) socket.connect();
             socket.emit('createLobby', { username });
         } else {
             alert('Please enter a username.');
@@ -33,7 +32,6 @@ export const Lobby = () => {
     const handleJoinLobby = () => {
         if (username.trim() && lobbyIdToJoin.trim()) {
             sessionStorage.setItem('username', username);
-            if (!socket.connected) socket.connect();
             navigate(`/lobby/${lobbyIdToJoin.toUpperCase()}`);
         } else {
             alert('Please enter a username and Lobby ID.');

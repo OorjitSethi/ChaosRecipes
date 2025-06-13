@@ -24,9 +24,6 @@ export const Game = () => {
     const [showTutorial, setShowTutorial] = useState(false);
 
     useEffect(() => {
-        if (!socket.connected) {
-            socket.connect();
-        }
         const username = sessionStorage.getItem('username');
         if (!username || !lobbyId) {
             navigate('/');
